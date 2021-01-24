@@ -1,0 +1,14 @@
+<section class="wrap" aria-labelledby="entry-title">
+  <h1 id="entry-title">Abbreviator Settings</h1>
+
+  <form method="post" action="{{ function('admin_url', 'admin-post.php') }}">
+    <div id="abbreviator-form">
+      <abbreviator></abbreviator>
+    </div>
+
+    {{ function('wp_nonce_field', action, nonce, true, false) }}
+    <button type="submit" class="button button-primary" name="action" value="{{ function('esc_attr', action) }}">
+      Save Abbreviations
+    </button>
+  </form>
+</section>

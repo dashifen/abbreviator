@@ -1,0 +1,20 @@
+#abbreviator-form table {
+  max-width: 800px;
+  width: 100%; }
+
+#abbreviator-form th {
+  text-align: left;
+  vertical-align: bottom; }
+  #abbreviator-form th#abbreviations {
+    width: 25%; }
+  #abbreviator-form th#meanings {
+    width: 65%; }
+  #abbreviator-form th#buttons {
+    width: 10%; }
+
+#abbreviator-form input {
+  margin-left: -3px;
+  width: 100%; }
+
+/*# sourceURL=webpack://./assets/styles/abbreviator.scss */
+/*# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly8uL2Fzc2V0cy9zdHlsZXMvYWJicmV2aWF0b3Iuc2NzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtFQUVJLGdCQUFnQjtFQUNoQixXQUFXLEVBQUE7O0FBSGY7RUFPSSxnQkFBZ0I7RUFDaEIsc0JBQXNCLEVBQUE7RUFSMUI7SUFXTSxVQUFVLEVBQUE7RUFYaEI7SUFlTSxVQUFVLEVBQUE7RUFmaEI7SUFtQk0sVUFBVSxFQUFBOztBQW5CaEI7RUF3QkksaUJBQWlCO0VBQ2pCLFdBQVcsRUFBQSIsInNvdXJjZXNDb250ZW50IjpbIiNhYmJyZXZpYXRvci1mb3JtIHtcbiAgdGFibGUge1xuICAgIG1heC13aWR0aDogODAwcHg7XG4gICAgd2lkdGg6IDEwMCU7XG4gIH1cblxuICB0aCB7XG4gICAgdGV4dC1hbGlnbjogbGVmdDtcbiAgICB2ZXJ0aWNhbC1hbGlnbjogYm90dG9tO1xuXG4gICAgJiNhYmJyZXZpYXRpb25zIHtcbiAgICAgIHdpZHRoOiAyNSU7XG4gICAgfVxuXG4gICAgJiNtZWFuaW5ncyB7XG4gICAgICB3aWR0aDogNjUlO1xuICAgIH1cblxuICAgICYjYnV0dG9ucyB7XG4gICAgICB3aWR0aDogMTAlO1xuICAgIH1cbiAgfVxuXG4gIGlucHV0IHtcbiAgICBtYXJnaW4tbGVmdDogLTNweDtcbiAgICB3aWR0aDogMTAwJTtcbiAgfVxufVxuIl0sInNvdXJjZVJvb3QiOiIifQ== */

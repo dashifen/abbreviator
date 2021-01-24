@@ -1,0 +1,28 @@
+#abbreviator-form {
+  table {
+    max-width: 800px;
+    width: 100%;
+  }
+
+  th {
+    text-align: left;
+    vertical-align: bottom;
+
+    &#abbreviations {
+      width: 25%;
+    }
+
+    &#meanings {
+      width: 65%;
+    }
+
+    &#buttons {
+      width: 10%;
+    }
+  }
+
+  input {
+    margin-left: -3px;
+    width: 100%;
+  }
+}
