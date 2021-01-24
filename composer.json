@@ -1,0 +1,17 @@
+{
+  "name": "dashifen/abbreviator",
+  "description": "A WordPress plugin that allows you to define abbreviations and their meaning which are automatically added to the content of a post when encountered for the first time.",
+  "minimum-stability": "stable",
+  "type": "wordpress-plugin",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "David Dashifen Kees",
+      "email": "dashifen@dashifen.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "dashifen/wp-handler": "^10.2"
+  }
+}
