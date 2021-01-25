@@ -19,6 +19,11 @@ export default {
         'abbreviation': '',
         'meaning': ''
       });
+
+      this.$nextTick(() => {
+        const rows = Array.from(this.$refs.abbreviations.childNodes).filter(element => element instanceof HTMLElement);
+        rows[rows.length - 1].cells[0].children[1].focus();
+      });
     },
 
     removeRow(index) {
@@ -46,7 +51,7 @@ export default {
       </th>
     </tr>
     </thead>
-    <tbody id="abbreviations" aria-live="polite">
+    <tbody id="abbreviations" aria-live="polite" ref="abbreviations">
     <tr v-for="(abbreviation, index) in abbreviations">
       <td headers="abbreviation">
         <label :for="'abbr-'+index" class="screen-reader-text">Enter Abbreviation</label>

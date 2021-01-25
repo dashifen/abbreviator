@@ -34,6 +34,11 @@ class Abbreviator extends AbstractPluginHandler
       $this->addFilter('timber/locations', 'addTwigLocation');
       $this->addAction('admin_menu', 'addAbbreviatorSettings');
       $this->addAction('admin_post_' . $this->getAction(), 'saveAbbreviatorSettings');
+      
+      // we do this at priority level 50 just because it's likely at or
+      // toward the end of the queue of filters on the content.
+      
+      $this->addFilter('the_content', 'addAbbrTags', 50);
     }
   }
   
@@ -133,6 +138,7 @@ class Abbreviator extends AbstractPluginHandler
   protected function saveAbbreviatorSettings(): void
   {
     $postedData = $_POST;
+    self::debug($postedData, true);
     if ($this->isValidActionAndNonce()) {
       $postValidity = $this->validatePostedData($postedData);
       if ($postValidity->valid) {
@@ -154,6 +160,32 @@ class Abbreviator extends AbstractPluginHandler
       set_transient($this->getTransient(), $postValidity, 300);
       wp_safe_redirect($_POST['_wp_http_referer']);
     }
+  }
+  
+  /**
+   * getTransient
+   *
+   * Returns the name of our post validity transient so that we don't spell
+   * it wrong when it's used above.
+   *
+   * @return string
+   */
+  private function getTransient(): string
+  {
+    return $this->getOptionNamePrefix() . 'transient';
+  }
+  
+  /**
+   * getOptionNamePrefix
+   *
+   * Inherited from the OptionManagementTrait, this method returns the unique
+   * prefix for the options managed by this plugin.
+   *
+   * @return string
+   */
+  public function getOptionNamePrefix(): string
+  {
+    return self::SLUG . '-';
   }
   
   /**
@@ -187,16 +219,92 @@ class Abbreviator extends AbstractPluginHandler
   }
   
   /**
-   * getTransient
+   * addAbbrTags
    *
-   * Returns the name of our post validity transient so that we don't spell
-   * it wrong when it's used above.
+   * Analyzes a post's content and adds any <abbr> tags that match the
+   * information managed by this object.
+   *
+   * @param string $content
+   *
+   * @return string
+   * @throws HandlerException
+   * @throws TransformerException
+   */
+  protected function addAbbrTags(string $content): string
+  {
+    $abbrMeaningMap = $this->getOption('abbreviations', []);
+    
+    if (sizeof($abbrMeaningMap) > 0) {
+      foreach (array_keys($abbrMeaningMap) as $abbr) {
+        $content = $this->replaceAbbreviation($content, $abbr, $abbrMeaningMap[$abbr]);
+      }
+    }
+    
+    return $content;
+  }
+  
+  /**
+   * replaceAbbreviation
+   *
+   * Makes the necessary replacements within the content taking care to avoid
+   * making any changes within HTML tags.
+   *
+   * @param string $content
+   * @param string $abbr
+   * @param string $title
    *
    * @return string
    */
-  private function getTransient(): string
+  private function replaceAbbreviation(string $content, string $abbr, string $title): string
   {
-    return $this->getOptionNamePrefix() . 'transient';
+    $replacement = sprintf('<abbr title="%s">%s</abbr>', $title, $abbr);
+  
+    // to make our replacements, we're going to split our $content based on
+    // $abbr.  but, we want to make sure we do so at word boundaries.  so,
+    // we use preg_split rather than explode.  then, as we loop, we re-
+    // construct our $content from each of the parts.
+  
+    $reconstruction = "";
+    $parts = preg_split("/\b$abbr\b/", $content);
+    foreach ($parts as $i => $part) {
+      $reconstruction .= $part;
+    
+      // as long as there is a next part, we need to add either our
+      // $replacement or $abbr back onto our $reconstruction.  but, we
+      // only want to add $replacement if we're not within a HTML tag.
+      // the method below will tell us how to proceed.
+    
+      if (isset($parts[$i+1])) {
+        $reconstruction .= $this->shouldAddReplacement($reconstruction)
+          ? $replacement
+          : $abbr;
+      }
+    }
+  
+    return $reconstruction;
+  }
+  
+  /**
+   * shouldAddReplacement
+   *
+   * Returns true if we should add our replacement to the reconstructed
+   * content in the prior method and false otherwise.
+   *
+   * @param string $reconstruction
+   *
+   * @return bool
+   */
+  private function shouldAddReplacement (string $reconstruction): bool
+  {
+    // we do want to replace when we're not in the middle of a HTML tag
+    // within our $reconstruction.  we can tell if that's the case by
+    // counting the number of < and > characters.  if those counts are
+    // equal, then every tag has been both opened and closed and,
+    // therefore, we're not within a tag.
+    
+    $openers = substr_count($reconstruction, '<');
+    $closers = substr_count($reconstruction, '>');
+    return $openers === $closers;
   }
   
   /**
@@ -211,18 +319,5 @@ class Abbreviator extends AbstractPluginHandler
   protected function getOptionNames(): array
   {
     return ['abbreviations'];
-  }
-  
-  /**
-   * getOptionNamePrefix
-   *
-   * Inherited from the OptionManagementTrait, this method returns the unique
-   * prefix for the options managed by this plugin.
-   *
-   * @return string
-   */
-  public function getOptionNamePrefix(): string
-  {
-    return self::SLUG . '-';
   }
 }
