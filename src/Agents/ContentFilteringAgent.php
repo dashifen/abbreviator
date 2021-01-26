@@ -19,6 +19,8 @@ class ContentFilteringAgent extends AbstractPluginAgent
 {
   use PostMetaManagementTrait;
   
+  private int $postId;
+  
   /**
    * initialize
    *
@@ -47,24 +49,18 @@ class ContentFilteringAgent extends AbstractPluginAgent
    */
   protected function addAbbrTags(string $content): string
   {
-    $postId = get_the_ID();
-    $hasAbbreviations = !$this->shouldRecheckPost($postId)
-      ? $this->getPostMeta($postId, 'post-has-abbreviations')
-      : $this->postHasAbbreviations();
+    $this->postId = get_the_ID();
+    $abbreviationCollection = $this->handler->getAbbreviations();
+    $abbreviations = $abbreviationCollection->getAbbreviations();
+    
+    $hasAbbreviations = !$this->shouldRecheckPost()
+      ? $this->getPostMeta($this->postId, 'post-has-abbreviations', false)
+      : $this->postHasAbbreviations($content, $abbreviations);
     
     if ($hasAbbreviations) {
-    
+      $tags = $abbreviationCollection->getTags();
+      $content = str_replace($abbreviations, $tags, $content);
     }
-    
-    
-    
-    /*$abbrMeaningMap = $this->handler->getOption('abbreviations', []);
-    
-    if (sizeof($abbrMeaningMap) > 0) {
-      foreach (array_keys($abbrMeaningMap) as $abbr) {
-        $content = $this->replaceAbbreviation($content, $abbr, $abbrMeaningMap[$abbr]);
-      }
-    }*/
     
     return $content;
   }
@@ -75,79 +71,45 @@ class ContentFilteringAgent extends AbstractPluginAgent
    * Returns true if it's time to recheck this post for abbreviations and
    * false if it has been previously checked and remains unchanged.
    *
-   * @param int $postId
+   * @return bool
+   * @throws HandlerException
+   */
+  private function shouldRecheckPost(): bool
+  {
+    $lastModifiedUTC = get_post_modified_time('U', true);
+    $lastAbbreviationCheck = $this->getPostMeta($this->postId, 'last-abbreviation-check', 0);
+    return $lastModifiedUTC > $lastAbbreviationCheck;
+  }
+  
+  /**
+   * postHasAbbreviations
+   *
+   * Returns true if any of our abbreviations can be found within the
+   * content.
+   *
+   * @param string $content
+   * @param array  $abbreviations
    *
    * @return bool
    * @throws HandlerException
    */
-  private function shouldRecheckPost(int $postId): bool
+  private function postHasAbbreviations(string $content, array $abbreviations): bool
   {
-    $lastAbbreviationCheck = $this->getPostMeta($postId, 'last-abbreviation-check');
+    // first, we're about to check this post for abbreviations.  therefore, we
+    // want to record the current time in UTC so that we can skip this step
+    // again in the future, or at least until the post gets updated and might,
+    // therefore, have new abbreviations within it.
     
-  }
-  
-  /**
-   * replaceAbbreviation
-   *
-   * Makes the necessary replacements within the content taking care to avoid
-   * making any changes within HTML tags.
-   *
-   * @param string $content
-   * @param string $abbr
-   * @param string $title
-   *
-   * @return string
-   */
-  private function replaceAbbreviation(string $content, string $abbr, string $title): string
-  {
-    $replacement = sprintf('<abbr title="%s">%s</abbr>', $title, $abbr);
+    $this->updatePostMeta($this->postId, 'last-abbreviation-check', gmdate('U'));
     
-    // to make our replacements, we're going to split our $content based on
-    // $abbr.  but, we want to make sure we do so at word boundaries.  so,
-    // we use preg_split rather than explode.  then, as we loop, we re-
-    // construct our $content from each of the parts.
+    // then, to see if this content has any of our abbreviations in it, we'll
+    // create a regex that will match any of them and then test content with
+    // it.  for example, if FUBAR and SNAFU are our abbreviations, the pattern
+    // we create here is /FUBAR|SNAFU/ and that'll match either or both of
+    // those anywhere in our content.
     
-    $reconstruction = "";
-    $parts = preg_split("/\b$abbr\b/", $content);
-    foreach ($parts as $i => $part) {
-      $reconstruction .= $part;
-      
-      // as long as there is a next part, we need to add either our
-      // $replacement or $abbr back onto our $reconstruction.  but, we
-      // only want to add $replacement if we're not within a HTML tag.
-      // the method below will tell us how to proceed.
-      
-      if (isset($parts[$i+1])) {
-        $reconstruction .= $this->shouldAddReplacement($reconstruction)
-          ? $replacement
-          : $abbr;
-      }
-    }
-    
-    return $reconstruction;
-  }
-  
-  /**
-   * shouldAddReplacement
-   *
-   * Returns true if we should add our replacement to the reconstructed
-   * content in the prior method and false otherwise.
-   *
-   * @param string $reconstruction
-   *
-   * @return bool
-   */
-  private function shouldAddReplacement (string $reconstruction): bool
-  {
-    // we do want to replace when we're not in the middle of a HTML tag
-    // within our $reconstruction.  we can tell if that's the case by
-    // counting the number of < and > characters.  if those counts are
-    // equal, then every tag has been both opened and closed and,
-    // therefore, we're not within a tag.
-    
-    $openers = substr_count($reconstruction, '<');
-    $closers = substr_count($reconstruction, '>');
-    return $openers === $closers;
+    $regex = '/' . join('|', array_keys($abbreviations)) . '/';
+    return preg_match($regex, $content);
   }
   
   /**

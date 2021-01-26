@@ -5,6 +5,7 @@ namespace Dashifen\Abbreviator;
 use Dashifen\Transformer\TransformerException;
 use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Traits\OptionsManagementTrait;
+use Dashifen\Abbreviator\Services\AbbreviationCollection;
 use Dashifen\WPHandler\Handlers\Plugins\AbstractPluginHandler;
 
 class Abbreviator extends AbstractPluginHandler
@@ -58,7 +59,26 @@ class Abbreviator extends AbstractPluginHandler
    */
   protected function ajaxGetAbbreviations(): void
   {
-    wp_die(json_encode($this->getOption('abbreviations')));
+    wp_die(
+      json_encode(
+        $this->getAbbreviations()->getAbbreviationMeaningMap()
+      )
+    );
+  }
+  
+  /**
+   * getAbbreviations
+   *
+   * A convenience method that helps to type hint the otherwise mixed type
+   * information that is returned from our getOption method.
+   *
+   * @return AbbreviationCollection
+   * @throws HandlerException
+   * @throws TransformerException
+   */
+  public function getAbbreviations(): AbbreviationCollection
+  {
+    return $this->getOption('abbreviations', new AbbreviationCollection());
   }
   
   /**

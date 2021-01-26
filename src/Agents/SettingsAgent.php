@@ -10,6 +10,8 @@ use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Repositories\PostValidity;
 use Dashifen\WPHandler\Agents\AbstractPluginAgent;
 use Dashifen\WPHandler\Traits\ActionAndNonceTrait;
+use Dashifen\Abbreviator\Repositories\Abbreviation;
+use Dashifen\Abbreviator\Services\AbbreviationCollection;
 use Dashifen\WPHandler\Repositories\MenuItems\SubmenuItem;
 
 /**
@@ -157,15 +159,14 @@ class SettingsAgent extends AbstractPluginAgent
       if ($postValidity->valid) {
         
         // if our posted data has been deemed valid, then we can save it in
-        // the database.  to do so, we want to make a mapping of the database
-        // that links abbreviations and meanings.  we already know the same
-        // number is in each of the arrays we're using herein because,
-        // otherwise, they wouldn't have been valid.
-        
-        $abbreviations = array_combine(
-          $postedData['abbreviations'],
-          $postedData['meanings']
-        );
+        // the database.  to do so, we construct an collection of Abbreviation
+        // objects and store that information instead of the "raw" data
+        // that was posted here.
+  
+        $abbreviations = new AbbreviationCollection();
+        foreach ($postedData['abbreviations'] as $i => $abbreviation) {
+          $abbreviations[] = new Abbreviation($abbreviation, $postedData['meanings'][$i]);
+        }
         
         $this->handler->updateOption('abbreviations', $abbreviations);
       }
