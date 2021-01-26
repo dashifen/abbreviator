@@ -25,6 +25,7 @@ class Abbreviator extends AbstractPluginHandler
   public function initialize(): void
   {
     if (!$this->isInitialized()) {
+      $this->addAction('init', 'initializeAgents');
       $this->addFilter('timber/locations', 'addTwigLocation');
       $this->addAction('wp_ajax_get-abbreviations', 'ajaxGetAbbreviations');
     }

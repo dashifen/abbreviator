@@ -2,12 +2,23 @@
 
 namespace Dashifen\Abbreviator\Agents;
 
+use Dashifen\Abbreviator\Abbreviator;
 use Dashifen\Transformer\TransformerException;
 use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Agents\AbstractPluginAgent;
+use Dashifen\WPHandler\Traits\PostMetaManagementTrait;
 
+/**
+ * Class ContentFilteringAgent
+ *
+ * @property Abbreviator $handler
+ *
+ * @package Dashifen\Abbreviator\Agents
+ */
 class ContentFilteringAgent extends AbstractPluginAgent
 {
+  use PostMetaManagementTrait;
+  
   /**
    * initialize
    *
@@ -36,15 +47,43 @@ class ContentFilteringAgent extends AbstractPluginAgent
    */
   protected function addAbbrTags(string $content): string
   {
-    $abbrMeaningMap = $this->getOption('abbreviations', []);
+    $postId = get_the_ID();
+    $hasAbbreviations = !$this->shouldRecheckPost($postId)
+      ? $this->getPostMeta($postId, 'post-has-abbreviations')
+      : $this->postHasAbbreviations();
+    
+    if ($hasAbbreviations) {
+    
+    }
+    
+    
+    
+    /*$abbrMeaningMap = $this->handler->getOption('abbreviations', []);
     
     if (sizeof($abbrMeaningMap) > 0) {
       foreach (array_keys($abbrMeaningMap) as $abbr) {
         $content = $this->replaceAbbreviation($content, $abbr, $abbrMeaningMap[$abbr]);
       }
-    }
+    }*/
     
     return $content;
+  }
+  
+  /**
+   * shouldRecheckPost
+   *
+   * Returns true if it's time to recheck this post for abbreviations and
+   * false if it has been previously checked and remains unchanged.
+   *
+   * @param int $postId
+   *
+   * @return bool
+   * @throws HandlerException
+   */
+  private function shouldRecheckPost(int $postId): bool
+  {
+    $lastAbbreviationCheck = $this->getPostMeta($postId, 'last-abbreviation-check');
+    
   }
   
   /**
@@ -111,5 +150,31 @@ class ContentFilteringAgent extends AbstractPluginAgent
     return $openers === $closers;
   }
   
+  /**
+   * getPostMetaNames
+   *
+   * Inherited from the PostMetaManagementTrait, this method returns an array
+   * of meta keys that define the additional data that this object managers
+   * about posts.
+   *
+   * @return array
+   */
+  protected function getPostMetaNames(): array
+  {
+    return ['post-has-abbreviations', 'last-abbreviation-check'];
+  }
   
+  /**
+   * getPostMetaNamePrefix
+   *
+   * Inherited from the PostMetaManagementTrait, this method returns a string
+   * that is prepended to the name of post meta keys internal to the other
+   * methods of that trait to uniquely identify this object's metadata.
+   *
+   * @return string
+   */
+  public function getPostMetaNamePrefix(): string
+  {
+    return $this->handler->getOptionNamePrefix();
+  }
 }

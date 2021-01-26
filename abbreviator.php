@@ -17,6 +17,9 @@
 
 use Dashifen\Abbreviator\Abbreviator;
 use Dashifen\Exception\Exception;
+use Dashifen\Abbreviator\Agents\SettingsAgent;
+use Dashifen\Abbreviator\Agents\ContentFilteringAgent;
+use Dashifen\WPHandler\Agents\Collection\Factory\AgentCollectionFactory;
 
 $autoloader = file_exists(dirname(ABSPATH) . '/deps/vendor/autoload.php')
   ? dirname(ABSPATH) . '/deps/vendor/autoload.php'    // production location
@@ -32,6 +35,15 @@ try {
     // re-initializations of the object.
     
     $abbreviator = new Abbreviator();
+    $acf = new AgentCollectionFactory();
+    
+    if (is_admin()) {
+      $acf->registerAgent(SettingsAgent::class);
+    } else {
+      $acf->registerAgent(ContentFilteringAgent::class);
+    }
+
+    $abbreviator->setAgentCollection($acf);
     $abbreviator->initialize();
   })();
 } catch (Exception $e) {

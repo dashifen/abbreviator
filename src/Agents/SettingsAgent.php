@@ -12,8 +12,6 @@ use Dashifen\WPHandler\Agents\AbstractPluginAgent;
 use Dashifen\WPHandler\Traits\ActionAndNonceTrait;
 use Dashifen\WPHandler\Repositories\MenuItems\SubmenuItem;
 
-use function Dashifen\Abbreviator\;
-
 /**
  * Class SettingsAgent
  *
@@ -81,7 +79,8 @@ class SettingsAgent extends AbstractPluginAgent
     // server.  that information has been stored in a transient so we can get
     // it out of the database and use it as follows.
     
-    $priorPostValidity = get_transient($this->getTransient());
+    $transient = $this->getTransient();
+    $priorPostValidity = get_transient($transient);
     if ($priorPostValidity instanceof PostValidity) {
       
       // now that we know we have information about a prior post to share with
@@ -100,9 +99,12 @@ class SettingsAgent extends AbstractPluginAgent
       
       // finally, we use addAction to hook that anonymous function to the
       // admin_notices hook.  when WP gets to it, it'll call our method and
-      // show the correct information to the visitor.
+      // show the correct information to the visitor.  then, we can delete our
+      // transient because we're done with it.  the information in the
+      // $priorPostValidity object will remain in memory due to the closure.
       
       $this->addAction('admin_notices', $notifier);
+      delete_transient($transient);
     }
   }
   
@@ -165,7 +167,7 @@ class SettingsAgent extends AbstractPluginAgent
           $postedData['meanings']
         );
         
-        $this->updateOption('abbreviations', $abbreviations);
+        $this->handler->updateOption('abbreviations', $abbreviations);
       }
       
       $timeLimit = self::isDebug() ? 3600 : 300;
@@ -184,7 +186,7 @@ class SettingsAgent extends AbstractPluginAgent
    */
   private function getTransient(): string
   {
-    return $this->getOptionNamePrefix() . 'transient';
+    return $this->handler->getOptionNamePrefix() . 'transient';
   }
   
   /**
