@@ -18,7 +18,8 @@
   "require": {
     "php": ">=7.4",
     "dashifen/wp-handler": "^10.2",
-    "timber/timber": "^1.18"
+    "timber/timber": "^1.18",
+    "ext-json": "*"
   },
   "config": {
     "optimize-autoloader": true,

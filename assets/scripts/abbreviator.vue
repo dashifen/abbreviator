@@ -1,6 +1,7 @@
-<!--suppress HtmlFormInputWithoutLabel -->
+<!--suppress HtmlFormInputWithoutLabel, JSUnresolvedVariable -->
 
 <script>
+import Axios from 'axios';
 export default {
   name: "abbreviator",
   data() {
@@ -9,20 +10,30 @@ export default {
     };
   },
   mounted() {
-    if (this.abbreviations.length === 0) {
-      this.addRow();
-    }
+    const request = '?action=get-abbreviations';
+    Axios.get(ajaxurl + request).then((response) => {
+      for(let abbreviation in response.data) {
+        if (response.data.hasOwnProperty(abbreviation)) {
+          this.addRow(abbreviation, response.data[abbreviation]);
+        }
+      }
+
+      this.addRow('', '');
+    });
   },
   methods: {
-    addRow() {
+    addRow(abbreviation, meaning) {
       this.abbreviations.push({
-        'abbreviation': '',
-        'meaning': ''
+        'abbreviation': abbreviation,
+        'meaning': meaning
       });
 
       this.$nextTick(() => {
-        const rows = Array.from(this.$refs.abbreviations.childNodes).filter(element => element instanceof HTMLElement);
-        rows[rows.length - 1].cells[0].children[1].focus();
+        const abbrFields = Array.from(
+            document.querySelectorAll('input[type=text][id^=abbr]')
+        );
+
+        abbrFields[abbrFields.length - 1].focus();
       });
     },
 
@@ -51,7 +62,7 @@ export default {
       </th>
     </tr>
     </thead>
-    <tbody id="abbreviations" aria-live="polite" ref="abbreviations">
+    <tbody id="abbreviations" aria-live="polite">
     <tr v-for="(abbreviation, index) in abbreviations">
       <td headers="abbreviation">
         <label :for="'abbr-'+index" class="screen-reader-text">Enter Abbreviation</label>
