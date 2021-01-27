@@ -275,16 +275,16 @@
         },
         {
             "name": "dashifen/collection",
-            "version": "2.0.1",
+            "version": "2.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dashifen/collection.git",
-                "reference": "d44a8397f1fff60e26848cdf8329cf50d14fc9e8"
+                "reference": "b73a627dc0bec89619dbaa080c3a6a92808bb484"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dashifen/collection/zipball/d44a8397f1fff60e26848cdf8329cf50d14fc9e8",
-                "reference": "d44a8397f1fff60e26848cdf8329cf50d14fc9e8",
+                "url": "https://api.github.com/repos/dashifen/collection/zipball/b73a627dc0bec89619dbaa080c3a6a92808bb484",
+                "reference": "b73a627dc0bec89619dbaa080c3a6a92808bb484",
                 "shasum": ""
             },
             "require": {
@@ -310,9 +310,9 @@
             "description": "An abstract object from which concrete collections can be built.",
             "support": {
                 "issues": "https://github.com/dashifen/collection/issues",
-                "source": "https://github.com/dashifen/collection/tree/2.0.1"
+                "source": "https://github.com/dashifen/collection/tree/2.0.2"
             },
-            "time": "2021-01-26T18:42:10+00:00"
+            "time": "2021-01-27T02:44:23+00:00"
         },
         {
             "name": "dashifen/debugging",

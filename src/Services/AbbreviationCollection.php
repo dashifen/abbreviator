@@ -84,9 +84,6 @@ class AbbreviationCollection extends AbstractCollection
       );
     }
     
-    SettingsAgent::debug($this->key());
-    
     parent::offsetSet($offset, $value);
   }
-  
 }
