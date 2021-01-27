@@ -29,20 +29,19 @@ require_once($autoloader);
 
 try {
   (function () {
-    
-    // by instantiating our object in this anonymous function, it doesn't
-    // get added to the WP global scope.  this should prevent any accidental
-    // re-initializations of the object.
-    
     $abbreviator = new Abbreviator();
     $acf = new AgentCollectionFactory();
     
-    if (is_admin()) {
-      $acf->registerAgent(SettingsAgent::class);
-    } else {
-      $acf->registerAgent(ContentFilteringAgent::class);
-    }
-
+    // we only want to filter content on the public side, and we only need
+    // the settings agent on the admin side.  therefore, we register only
+    // the agent we need based on the current request as follows, and this
+    // prevents any unnecessary hook attachments.
+    
+    $agent = !is_admin()
+      ? ContentFilteringAgent::class
+      : SettingsAgent::class;
+    
+    $acf->registerAgent($agent);
     $abbreviator->setAgentCollection($acf);
     $abbreviator->initialize();
   })();

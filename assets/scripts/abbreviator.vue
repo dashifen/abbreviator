@@ -73,7 +73,7 @@ export default {
         <input type="text" name="meanings[]" :id="'meaning-'+index" :key="index" v-model="abbreviation.meaning">
       </td>
       <td headers="buttons">
-        <button v-if="isLastAbbr(index)" @click.prevent="addRow" aria-controls="abbreviations" class="button button-secondary">Add</button>
+        <button v-if="isLastAbbr(index)" @click.prevent="addRow('','')" aria-controls="abbreviations" class="button button-secondary">Add</button>
         <button v-else @click.prevent="removeRow(index)" aria-controls="abbreviations" class="button button-secondary">Remove</button>
       </td>
     </tr>

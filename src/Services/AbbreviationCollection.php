@@ -3,6 +3,7 @@
 namespace Dashifen\Abbreviator\Services;
 
 use Dashifen\Collection\AbstractCollection;
+use Dashifen\Abbreviator\Agents\SettingsAgent;
 use Dashifen\Abbreviator\Repositories\Abbreviation;
 
 /**
@@ -83,12 +84,7 @@ class AbbreviationCollection extends AbstractCollection
       );
     }
     
-    if (!is_int($offset)) {
-      throw new AbbreviationCollectionException(
-        'Please index your AbbreviationCollection using integers',
-        AbbreviationCollectionException::NOT_AN_INTEGER
-      );
-    }
+    SettingsAgent::debug($this->key());
     
     parent::offsetSet($offset, $value);
   }

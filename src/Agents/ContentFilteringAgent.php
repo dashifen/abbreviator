@@ -53,11 +53,24 @@ class ContentFilteringAgent extends AbstractPluginAgent
     $abbreviationCollection = $this->handler->getAbbreviations();
     $abbreviations = $abbreviationCollection->getAbbreviations();
     
+    // before we do a bunch of work, we'll first see if we've already checked
+    // this post.  as long as it hasn't been edited since the last time we
+    // looked for abbreviations, we can use the results of that last check to
+    // determine how to proceed.
+    
     $hasAbbreviations = !$this->shouldRecheckPost()
       ? $this->getPostMeta($this->postId, 'post-has-abbreviations', false)
       : $this->postHasAbbreviations($content, $abbreviations);
     
     if ($hasAbbreviations) {
+      
+      // if we this post has abbreviations, we'll want to replace them with
+      // HTML <abbr> tags.  these will explain in an accessible manner the
+      // meaning of our abbreviations.  the abbreviation collection can
+      // produce those tags for us.  with those and the abbreviations we
+      // already extracted from the collection, we can just use str_replace
+      // to cram the tags into the content.
+      
       $tags = $abbreviationCollection->getTags();
       $content = str_replace($abbreviations, $tags, $content);
     }
@@ -76,6 +89,11 @@ class ContentFilteringAgent extends AbstractPluginAgent
    */
   private function shouldRecheckPost(): bool
   {
+    // the true flag in the following function call means we get a timestamp in
+    // UTC and not in the server's default time zone.  then, we default our
+    // last check time to zero so that, if we've never checked this one before,
+    // we'll do it now.
+    
     $lastModifiedUTC = get_post_modified_time('U', true);
     $lastAbbreviationCheck = $this->getPostMeta($this->postId, 'last-abbreviation-check', 0);
     return $lastModifiedUTC > $lastAbbreviationCheck;
@@ -105,10 +123,10 @@ class ContentFilteringAgent extends AbstractPluginAgent
     // then, to see if this content has any of our abbreviations in it, we'll
     // create a regex that will match any of them and then test content with
     // it.  for example, if FUBAR and SNAFU are our abbreviations, the pattern
-    // we create here is /FUBAR|SNAFU/ and that'll match either or both of
-    // those anywhere in our content.
+    // we create here is /\bFUBAR\b|\bSNAFU\b/ and that'll match either or both
+    // of those anywhere in our content.
     
-    $regex = '/' . join('|', array_keys($abbreviations)) . '/';
+    $regex = '/\b' . join('\b|\b', $abbreviations) . '\b/';
     return preg_match($regex, $content);
   }
   

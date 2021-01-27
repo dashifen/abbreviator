@@ -12,5 +12,4 @@ use Dashifen\Exception\Exception;
 class AbbreviationCollectionException extends Exception
 {
   public const NOT_AN_ABBREVIATION = 1;
-  public const NOT_AN_INTEGER = 2;
 }
