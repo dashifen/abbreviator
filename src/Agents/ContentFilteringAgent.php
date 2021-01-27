@@ -2,10 +2,12 @@
 
 namespace Dashifen\Abbreviator\Agents;
 
+use DOMDocument;
 use Dashifen\Abbreviator\Abbreviator;
 use Dashifen\Transformer\TransformerException;
 use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Agents\AbstractPluginAgent;
+use Dashifen\Abbreviator\Repositories\Abbreviation;
 use Dashifen\WPHandler\Traits\PostMetaManagementTrait;
 
 /**
@@ -50,8 +52,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
   protected function addAbbrTags(string $content): string
   {
     $this->postId = get_the_ID();
-    $abbreviationCollection = $this->handler->getAbbreviations();
-    $abbreviations = $abbreviationCollection->getAbbreviations();
+    $abbreviations = $this->handler->getAbbreviations();
     
     // before we do a bunch of work, we'll first see if we've already checked
     // this post.  as long as it hasn't been edited since the last time we
@@ -60,19 +61,14 @@ class ContentFilteringAgent extends AbstractPluginAgent
     
     $hasAbbreviations = !$this->shouldRecheckPost()
       ? $this->getPostMeta($this->postId, 'post-has-abbreviations', false)
-      : $this->postHasAbbreviations($content, $abbreviations);
+      : $this->postHasAbbreviations($content, $abbreviations->getAbbreviations());
     
     if ($hasAbbreviations) {
-      
-      // if we this post has abbreviations, we'll want to replace them with
-      // HTML <abbr> tags.  these will explain in an accessible manner the
-      // meaning of our abbreviations.  the abbreviation collection can
-      // produce those tags for us.  with those and the abbreviations we
-      // already extracted from the collection, we can just use str_replace
-      // to cram the tags into the content.
-      
-      $tags = $abbreviationCollection->getTags();
-      $content = str_replace($abbreviations, $tags, $content);
+      foreach ($abbreviations as $abbreviation) {
+        /** @var Abbreviation $abbreviation */
+        
+        $content = $this->makeReplacement($content, $abbreviation->abbreviation, $abbreviation->tag);
+      }
     }
     
     return $content;
@@ -127,7 +123,68 @@ class ContentFilteringAgent extends AbstractPluginAgent
     // of those anywhere in our content.
     
     $regex = '/\b' . join('\b|\b', $abbreviations) . '\b/';
-    return preg_match($regex, $content);
+    $hasAbbreviations = (bool) preg_match($regex, $content);
+    $this->updatePostMeta($this->postId, 'post-has-abbreviations', $hasAbbreviations);
+    return $hasAbbreviations;
+  }
+  
+  /**
+   * makeReplacement
+   *
+   * Makes the necessary replacements within $content while avoiding any within
+   * HTML tags.
+   *
+   * @param string $content
+   * @param string $abbreviation
+   * @param string $tag
+   *
+   * @return string
+   */
+  private function makeReplacement(string $content, string $abbreviation, string $tag): string
+  {
+    $reconstruction = "";
+    $parts = preg_split('/\b' . $abbreviation . '\b/', $content);
+    self::debug($parts, true);
+    
+    // our parts array is everything _except_ the abbreviations themselves.
+    // that allows us to loop over each part, add it to the reconstruction
+    // string, and then determine whether to put the abbreviation back or to
+    // add its replacement.
+    
+    foreach ($parts as $i => $part) {
+      $reconstruction .= $part;
+      
+      // as long as there's an additional part to add to our reconstruction,
+      // we'll check to see if we should add the replacement or just put the
+      // abbreviation back in the content.  the only time we add the
+      // abbreviation is if we're in the middle of an HTML tag.
+      
+      if (isset($parts[$i+1])) {
+        $reconstruction .= $this->hasUnclosedHTML($reconstruction)
+          ? $abbreviation
+          : $tag;
+      }
+    }
+    
+    return $reconstruction;
+  }
+  
+  /**
+   * hasUnclosedHTML
+   *
+   * Returns true if all HTML tags are closed in our parameter string but
+   * false if one remains open.
+   *
+   * @param string $reconstruction
+   *
+   * @return bool
+   */
+  private function hasUnclosedHTML(string $reconstruction): bool
+  {
+    // WordPress replaces < and > with their HTML entity equivalent
+    
+    
+    return false;
   }
   
   /**

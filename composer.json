@@ -17,9 +17,10 @@
   },
   "require": {
     "php": ">=7.4",
+    "ext-dom": "*",
+    "ext-json": "*",
     "dashifen/wp-handler": "^10.2",
     "timber/timber": "^1.18",
-    "ext-json": "*"
   },
   "config": {
     "optimize-autoloader": true,
