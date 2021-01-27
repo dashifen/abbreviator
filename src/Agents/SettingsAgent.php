@@ -165,7 +165,7 @@ class SettingsAgent extends AbstractPluginAgent
   
         $abbreviations = new AbbreviationCollection();
         foreach ($postedData['abbreviations'] as $i => $abbreviation) {
-          $abbreviations[$i] = new Abbreviation($abbreviation, $postedData['meanings'][$i]);
+          $abbreviations[] = new Abbreviation($abbreviation, $postedData['meanings'][$i]);
         }
         
         $this->handler->updateOption('abbreviations', $abbreviations);
