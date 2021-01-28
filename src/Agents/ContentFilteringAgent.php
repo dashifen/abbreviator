@@ -2,13 +2,13 @@
 
 namespace Dashifen\Abbreviator\Agents;
 
-use DOMDocument;
 use Dashifen\Abbreviator\Abbreviator;
 use Dashifen\Transformer\TransformerException;
 use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Agents\AbstractPluginAgent;
 use Dashifen\Abbreviator\Repositories\Abbreviation;
 use Dashifen\WPHandler\Traits\PostMetaManagementTrait;
+use Dashifen\Abbreviator\Services\AbbreviationCollection;
 
 /**
  * Class ContentFilteringAgent
@@ -21,6 +21,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
 {
   use PostMetaManagementTrait;
   
+  private AbbreviationCollection $abbreviations;
   private int $postId;
   
   /**
@@ -52,23 +53,44 @@ class ContentFilteringAgent extends AbstractPluginAgent
   protected function addAbbrTags(string $content): string
   {
     $this->postId = get_the_ID();
-    $abbreviations = $this->handler->getAbbreviations();
+    $this->abbreviations = $this->handler->getAbbreviations();
     
-    // before we do a bunch of work, we'll first see if we've already checked
-    // this post.  as long as it hasn't been edited since the last time we
-    // looked for abbreviations, we can use the results of that last check to
-    // determine how to proceed.
+    // before we do a bunch of work to see if there are abbreviations in
+    // this post, we'll see if we've already done it.  if we don't need to
+    // recheck the post, then we'll just grab our flag out of the database.
+    // as long as we get a false value back from the shouldRecheckPost method,
+    // we know that we can rely on our previously saved metadata within this
+    // one.
     
-    $hasAbbreviations = !$this->shouldRecheckPost()
+    $hasAbbreviations = ($useMetadata = !$this->shouldRecheckPost())
       ? $this->getPostMeta($this->postId, 'post-has-abbreviations', false)
-      : $this->postHasAbbreviations($content, $abbreviations->getAbbreviations());
+      : $this->postHasAbbreviations($content);
     
     if ($hasAbbreviations) {
-      foreach ($abbreviations as $abbreviation) {
-        /** @var Abbreviation $abbreviation */
+      
+      // if we're using our metadata, then there should be a record of our
+      // prior replacement in the database.  this uses a bit more database
+      // space instead of requiring that we do a lot of string manipulations.
+      // we haven't benchmarked it, but we suspect that a single additional
+      // DB selection is more efficient that regular expression and string
+      // manipulation.
+      
+      $replacedContent = $useMetadata
+        ? $this->getPostMeta($this->postId, 'replaced-content')
+        : '';
+      
+      if (empty($replacedContent)) {
         
-        $content = $this->makeReplacement($content, $abbreviation->abbreviation, $abbreviation->tag);
+        // but, if we're here, then we need to get replacement content.  either
+        // we've never done so for this post or the post changed and we can no
+        // longer rely on the prior metadata.  regardless, we get the replaced
+        // content and then store it in the database for next time.
+        
+        $replacedContent = $this->produceReplacedContent($content);
+        $this->updatePostMeta($this->postId, 'replaced-content', $replacedContent);
       }
+      
+      $content = $replacedContent;
     }
     
     return $content;
@@ -102,12 +124,11 @@ class ContentFilteringAgent extends AbstractPluginAgent
    * content.
    *
    * @param string $content
-   * @param array  $abbreviations
    *
    * @return bool
    * @throws HandlerException
    */
-  private function postHasAbbreviations(string $content, array $abbreviations): bool
+  private function postHasAbbreviations(string $content): bool
   {
     // first, we're about to check this post for abbreviations.  therefore, we
     // want to record the current time in UTC so that we can skip this step
@@ -122,69 +143,170 @@ class ContentFilteringAgent extends AbstractPluginAgent
     // we create here is /\bFUBAR\b|\bSNAFU\b/ and that'll match either or both
     // of those anywhere in our content.
     
-    $regex = '/\b' . join('\b|\b', $abbreviations) . '\b/';
-    $hasAbbreviations = (bool) preg_match($regex, $content);
+    $regex = '/\b' . join('\b|\b', $this->abbreviations->getAbbreviations()) . '\b/';
+    $matchCount = preg_match_all($regex, $content);
+    if ($matchCount > 1) {
+      
+      // if we found matches, we want to see if any of them are within HTML
+      // tags.  we do this by stripping out the tags and checking again.  if
+      // the same number of matches are listed before and after we remove tags,
+      // we're good to go.  if not, we simply identify this in the post meta
+      // so we can react to this fact again later.
+      
+      $postHasAbbreviationsInTags = $matchCount !== preg_match_all($regex, strip_tags($content));
+      $this->updatePostMeta($this->postId, 'post-has-abbrs-in-tags', $postHasAbbreviationsInTags);
+    }
+    
+    // before we return, we'll record the results of our regex test.  this
+    // keeps us from having to do it again until the next time the post is
+    // updated saving us some time.
+    
+    $hasAbbreviations = $matchCount >= 1;
     $this->updatePostMeta($this->postId, 'post-has-abbreviations', $hasAbbreviations);
     return $hasAbbreviations;
   }
   
   /**
-   * makeReplacement
+   * produceReplacedContent
    *
-   * Makes the necessary replacements within $content while avoiding any within
-   * HTML tags.
+   * This method determines how we want to proceed with respect to our
+   * replacements, performs them, and returns the results.
    *
    * @param string $content
-   * @param string $abbreviation
-   * @param string $tag
    *
    * @return string
+   * @throws HandlerException
    */
-  private function makeReplacement(string $content, string $abbreviation, string $tag): string
+  private function produceReplacedContent(string $content): string
   {
-    $reconstruction = "";
-    $parts = preg_split('/\b' . $abbreviation . '\b/', $content);
-    self::debug($parts, true);
-    
-    // our parts array is everything _except_ the abbreviations themselves.
-    // that allows us to loop over each part, add it to the reconstruction
-    // string, and then determine whether to put the abbreviation back or to
-    // add its replacement.
-    
-    foreach ($parts as $i => $part) {
-      $reconstruction .= $part;
-      
-      // as long as there's an additional part to add to our reconstruction,
-      // we'll check to see if we should add the replacement or just put the
-      // abbreviation back in the content.  the only time we add the
-      // abbreviation is if we're in the middle of an HTML tag.
-      
-      if (isset($parts[$i+1])) {
-        $reconstruction .= $this->hasUnclosedHTML($reconstruction)
-          ? $abbreviation
-          : $tag;
-      }
-    }
-    
-    return $reconstruction;
+    // there are two options for our replacement:  when there are and when
+    // there aren't abbreviations in HTML tags (e.g. in an image's alt
+    // attribute).
+  
+    return $this->getPostMeta($this->postId, 'post-has-abbrs-in-tags')
+      ? $this->makeReplacementsAroundTags($content)
+      : $this->makeReplacements($content);
   }
   
   /**
-   * hasUnclosedHTML
+   * makeReplacementsAroundTags
    *
-   * Returns true if all HTML tags are closed in our parameter string but
-   * false if one remains open.
+   * If we identify an abbreviation within an HTML tag, this method does its
+   * best to replace the ones that are outside tags.
    *
-   * @param string $reconstruction
+   * @param string $content
+   *
+   * @return string
+   * @throws HandlerException
+   */
+  private function makeReplacementsAroundTags(string $content): string
+  {
+    // it's possible that we can't do this replacement, so before we start to
+    // try, we'll check.  as long as we think we're good to go, we'll give it a
+    // shot.
+    
+    if ($couldReplace = $this->canReplace($content)) {
+      foreach ($this->abbreviations as $abbreviation) {
+        /** @var Abbreviation $abbreviation */
+        
+        $reconstruction = '';
+        $parts = preg_split('/\b' . $abbreviation->abbreviation . '\b/', $content);
+        foreach ($parts as $i => $part) {
+          $reconstruction .= $part;
+          
+          // $parts is an array of the everything before and after the current
+          // abbreviation.  we keep concatenating these parts back into the
+          // reconstruction variable, but we now have to decide if we add the
+          // abbreviation or its tag into that string to join this part and
+          // the next one, assuming there is, in fact, a next part.
+          
+          if (isset($parts[$i + 1])) {
+            $reconstruction .= $this->isWithinTag($reconstruction)
+              ? $abbreviation->abbreviation
+              : $abbreviation->tag;
+          }
+        }
+        
+        // now that we've reconstructed our content from the parts we split it
+        // into, we copy that reconstruction into the original variable.  this
+        // preps us to replace another abbreviation or to return our content
+        // to the calling scope below.
+        
+        $content = $reconstruction;
+      }
+    }
+    
+    // before we're done, we'll set a flag related to whether or not we could
+    // replace within this post's content.  notice that our Boolean stores
+    // if we could replace, but our post meta is named as if we did not.  that
+    // means we save the opposite of our variable.
+    
+    $this->updatePostMeta($this->postId, 'could-not-replace', !$couldReplace);
+    return $content;
+  }
+  
+  /**
+   * canReplaceAroundTags
+   *
+   * Returns true if we can replace abbreviations around our tags or if the
+   * content of this post prevents this work.
+   *
+   * @param $content
    *
    * @return bool
    */
-  private function hasUnclosedHTML(string $reconstruction): bool
+  private function canReplace($content): bool
   {
-    // WordPress replaces < and > with their HTML entity equivalent
+    // to determine if it's possible for us to safely make replacements, we
+    // count the < and > symbols.  as long as they're evenly matched, we can
+    // proceed because we'll be able to use them to determine when we're within
+    // a tag and when we're not.
     
+    return substr_count($content, '<') === substr_count($content, '>');
+  }
+  
+  /**
+   * isWithinTag
+   *
+   * Returns true if our parameter string indicates that we've begun but not
+   * yet completed a tag in that string.
+   *
+   * @param string $content
+   *
+   * @return bool
+   */
+  private function isWithinTag(string $content): bool
+  {
+    // in this context, an open tag is one that has a < symbol to begin it but
+    // we haven't yet added a > to the content to finish it.  we can tell this
+    // if the number of < symbols is not the same as the > ones in our content.
+    // the canReplace method checks that these counts are equal, so here we'll
+    // call that method and then return it's opposite.
     
-    return false;
+    return !$this->canReplace($content);
+  }
+  
+  /**
+   * makeReplacements
+   *
+   * Makes the necessary replacements within $content using str_replace for
+   * content blocks without abbreviations in tags.
+   *
+   * @param string $content
+   *
+   * @return string
+   */
+  private function makeReplacements(string $content): string
+  {
+    // if we're here, then the only abbreviations in our $content are outside
+    // of tags.  that means we can do our replacements using str_replace and
+    // the arrays we can extract from our abbreviation collection.
+    
+    return str_replace(
+      $content,
+      $this->abbreviations->getAbbreviations(),
+      $this->abbreviations->getTags()
+    );
   }
   
   /**
@@ -198,7 +320,13 @@ class ContentFilteringAgent extends AbstractPluginAgent
    */
   protected function getPostMetaNames(): array
   {
-    return ['post-has-abbreviations', 'last-abbreviation-check'];
+    return [
+      'last-abbreviation-check',
+      'post-has-abbreviations',
+      'post-has-abbrs-in-tags',
+      'could-not-replace',
+      'replaced-content',
+    ];
   }
   
   /**

@@ -20,7 +20,7 @@
     "ext-dom": "*",
     "ext-json": "*",
     "dashifen/wp-handler": "^10.2",
-    "timber/timber": "^1.18",
+    "timber/timber": "^1.18"
   },
   "config": {
     "optimize-autoloader": true,
