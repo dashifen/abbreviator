@@ -301,12 +301,12 @@ class ContentFilteringAgent extends AbstractPluginAgent
     // if we're here, then the only abbreviations in our $content are outside
     // of tags.  that means we can do our replacements using str_replace and
     // the arrays we can extract from our abbreviation collection.
+  
+    $tags = $this->abbreviations->getTags();
+    $abbreviations = $this->abbreviations->getAbbreviations();
+    $content = str_replace($abbreviations, $tags, $content);
+    return $content;
     
-    return str_replace(
-      $content,
-      $this->abbreviations->getAbbreviations(),
-      $this->abbreviations->getTags()
-    );
   }
   
   /**

@@ -54,7 +54,7 @@ class SettingsAgent extends AbstractPluginAgent
   protected function addAbbreviatorSettings(): void
   {
     $submenuItemSettings = [
-      'pageTitle'  => 'Abbreviator',
+      'pageTitle'  => 'Abbreviations',
       'capability' => $this->getCapabilityForAction('access'),
       'method'     => 'showAbbreviatorSettings',
     ];
