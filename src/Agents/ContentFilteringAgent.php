@@ -306,7 +306,6 @@ class ContentFilteringAgent extends AbstractPluginAgent
     $abbreviations = $this->abbreviations->getAbbreviations();
     $content = str_replace($abbreviations, $tags, $content);
     return $content;
-    
   }
   
   /**
