@@ -107,14 +107,17 @@ class ContentFilteringAgent extends AbstractPluginAgent
    */
   private function shouldRecheckPost(): bool
   {
-    // the true flag in the following function call means we get a timestamp in
-    // UTC and not in the server's default time zone.  then, we default our
-    // last check time to zero so that, if we've never checked this one before,
-    // we'll do it now.
+    // there are two ways that a recheck is triggered:  the post has been
+    // updated since the last check or the theme's stylesheet was.  either of
+    // these might indicate an expectation of the display changing, so we'll
+    // make sure it might change as follows.
     
     $lastModifiedUTC = get_post_modified_time('U', true);
+    $cssModified = filemtime($this->getStylesheetDir() . '/style.css');
     $lastAbbreviationCheck = $this->getPostMeta($this->postId, 'last-abbreviation-check', 0);
-    return $lastModifiedUTC > $lastAbbreviationCheck;
+    
+    return $lastModifiedUTC > $lastAbbreviationCheck
+      || $cssModified > $lastAbbreviationCheck;
   }
   
   /**
