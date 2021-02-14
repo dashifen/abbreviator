@@ -108,16 +108,36 @@ class ContentFilteringAgent extends AbstractPluginAgent
   private function shouldRecheckPost(): bool
   {
     // there are two ways that a recheck is triggered:  the post has been
-    // updated since the last check or the theme's stylesheet was.  either of
+    // updated since the last check or one of our watched files was.  either of
     // these might indicate an expectation of the display changing, so we'll
-    // make sure it might change as follows.
+    // make sure it might change as follows.  since the first criteria involves
+    // less work than the second, we'll test that one first.
     
     $lastModifiedUTC = get_post_modified_time('U', true);
-    $cssModified = filemtime($this->getStylesheetDir() . '/style.css');
     $lastAbbreviationCheck = $this->getPostMeta($this->postId, 'last-abbreviation-check', 0);
+    if ($lastModifiedUTC > $lastAbbreviationCheck) {
+      return true;
+    }
     
-    return $lastModifiedUTC > $lastAbbreviationCheck
-      || $cssModified > $lastAbbreviationCheck;
+    // still here?  then we want to check our watched files.  by default, we
+    // watch the theme's stylesheet.  but, we offer a filter so that users of
+    // this plugin can change this list as they might need to.
+    
+    $watchedFiles = [$this->getStylesheetDir() . '/style.css'];
+    $watchedFiles = apply_filters('abbreviator-watched-files', $watchedFiles);
+    
+    foreach ($watchedFiles as $file) {
+      if (is_file($file) & filemtime($file) > $lastAbbreviationCheck) {
+        
+        // to try and save time, the first file that triggers a need to perform
+        // our re-check ends this loop.  that way, we don't keep looking at
+        // more files once we no longer need to.
+        
+        return true;
+      }
+    }
+    
+    return false;
   }
   
   /**
