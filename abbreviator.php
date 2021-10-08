@@ -10,22 +10,20 @@
  * License URI: https://opensource.org/licenses/MIT
  * Requires at least: 5.6
  * Requires PHP: 7.4
- * Version: 1.0.0
+ * Version: 2.0.0
  *
  * @noinspection PhpIncludeInspection
  */
 
-use Dashifen\Abbreviator\Abbreviator;
 use Dashifen\Exception\Exception;
+use Dashifen\Abbreviator\Abbreviator;
 use Dashifen\Abbreviator\Agents\SettingsAgent;
 use Dashifen\Abbreviator\Agents\ContentFilteringAgent;
 use Dashifen\WPHandler\Agents\Collection\Factory\AgentCollectionFactory;
 
-$autoloader = file_exists(dirname(ABSPATH) . '/deps/vendor/autoload.php')
-  ? dirname(ABSPATH) . '/deps/vendor/autoload.php'    // production location
-  : 'vendor/autoload.php';                            // development location
-
-require_once($autoloader);
+if (!class_exists('Dashifen\Abbreviator\Abbreviator')) {
+  require_once 'vendor/autoload.php';
+}
 
 try {
   (function () {
