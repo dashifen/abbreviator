@@ -1,5 +1,5 @@
 {
-  "name": "dashifen/abbreviator",
+  "name": "dashifen/wp-plugin-abbreviator",
   "description": "A WordPress plugin that allows you to define abbreviations and their meaning which are automatically added to the content of a post when encountered for the first time.",
   "minimum-stability": "stable",
   "type": "wordpress-plugin",
