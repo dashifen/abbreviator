@@ -5,7 +5,7 @@
  * Description: A WordPress plugin that allows you to define abbreviations and their meaning which are automatically added to the content of a post when encountered for the first time.
  * Author: David Dashifen Kees
  * Author URI: http://dashifen.com
- * Version: 2.0.0
+ * Version: 2.1.0
  */
 
 namespace Dashifen\WordPress\Plugins;
