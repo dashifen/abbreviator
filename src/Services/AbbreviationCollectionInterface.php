@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Dashifen\Abbreviator\Services;
+namespace Dashifen\WordPress\Plugins\Abbreviator\Services;
 
 
 use Dashifen\Collection\CollectionInterface;

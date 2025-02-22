@@ -1,13 +1,13 @@
 <?php
 
-namespace Dashifen\Abbreviator\Services;
+namespace Dashifen\WordPress\Plugins\Abbreviator\Services;
 
 use Dashifen\Exception\Exception;
 
 /**
  * Class AbbreviationCollectionException
  *
- * @package Dashifen\Abbreviator\Services
+ * @package Dashifen\WordPress\Plugins\Abbreviator\Services
  */
 class AbbreviationCollectionException extends Exception
 {

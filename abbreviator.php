@@ -1,27 +1,22 @@
 <?php
-
 /**
  * Plugin Name: Abbreviator
  * Plugin URI: https://github.com/dashifen/abbreviator
  * Description: A WordPress plugin that allows you to define abbreviations and their meaning which are automatically added to the content of a post when encountered for the first time.
  * Author: David Dashifen Kees
  * Author URI: http://dashifen.com
- * License: MIT
- * License URI: https://opensource.org/licenses/MIT
- * Requires at least: 5.6
- * Requires PHP: 7.4
  * Version: 2.0.0
- *
- * @noinspection PhpIncludeInspection
  */
 
+namespace Dashifen\WordPress\Plugins;
+
 use Dashifen\Exception\Exception;
-use Dashifen\Abbreviator\Abbreviator;
-use Dashifen\Abbreviator\Agents\SettingsAgent;
-use Dashifen\Abbreviator\Agents\ContentFilteringAgent;
+use Dashifen\WordPress\Plugins\Abbreviator\Abbreviator;
+use Dashifen\WordPress\Plugins\Abbreviator\Agents\SettingsAgent;
+use Dashifen\WordPress\Plugins\Abbreviator\Agents\ContentFilteringAgent;
 use Dashifen\WPHandler\Agents\Collection\Factory\AgentCollectionFactory;
 
-if (!class_exists('Dashifen\Abbreviator\Abbreviator')) {
+if (!class_exists(Abbreviator::class)) {
   require_once 'vendor/autoload.php';
 }
 

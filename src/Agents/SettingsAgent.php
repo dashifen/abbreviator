@@ -1,17 +1,17 @@
 <?php
 
-namespace Dashifen\Abbreviator\Agents;
+namespace Dashifen\WordPress\Plugins\Abbreviator\Agents;
 
 use Timber\Timber;
-use Dashifen\Abbreviator\Abbreviator;
+use Dashifen\WordPress\Plugins\Abbreviator\Abbreviator;
 use Dashifen\Repository\RepositoryException;
 use Dashifen\Transformer\TransformerException;
 use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Repositories\PostValidity;
 use Dashifen\WPHandler\Agents\AbstractPluginAgent;
 use Dashifen\WPHandler\Traits\ActionAndNonceTrait;
-use Dashifen\Abbreviator\Repositories\Abbreviation;
-use Dashifen\Abbreviator\Services\AbbreviationCollection;
+use Dashifen\WordPress\Plugins\Abbreviator\Repositories\Abbreviation;
+use Dashifen\WordPress\Plugins\Abbreviator\Services\AbbreviationCollection;
 use Dashifen\WPHandler\Repositories\MenuItems\SubmenuItem;
 
 /**
@@ -19,7 +19,7 @@ use Dashifen\WPHandler\Repositories\MenuItems\SubmenuItem;
  *
  * @property Abbreviator $handler
  *
- * @package Dashifen\Abbreviator\Agents
+ * @package Dashifen\WordPress\Plugins\Abbreviator\Agents
  */
 class SettingsAgent extends AbstractPluginAgent
 {
@@ -159,7 +159,7 @@ class SettingsAgent extends AbstractPluginAgent
       if ($postValidity->valid) {
         
         // if our posted data has been deemed valid, then we can save it in
-        // the database.  to do so, we construct an collection of Abbreviation
+        // the database.  to do so, we construct a collection of Abbreviation
         // objects and store that information instead of the "raw" data
         // that was posted here.
   

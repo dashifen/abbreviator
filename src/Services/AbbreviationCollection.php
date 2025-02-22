@@ -1,17 +1,16 @@
 <?php
 
-namespace Dashifen\Abbreviator\Services;
+namespace Dashifen\WordPress\Plugins\Abbreviator\Services;
 
 use Dashifen\Collection\AbstractCollection;
-use Dashifen\Abbreviator\Agents\SettingsAgent;
-use Dashifen\Abbreviator\Repositories\Abbreviation;
+use Dashifen\WordPress\Plugins\Abbreviator\Repositories\Abbreviation;
 
 /**
  * Class AbbreviationCollection
  *
  * @property Abbreviation[] $collection
  *
- * @package Dashifen\Abbreviator\Services
+ * @package Dashifen\WordPress\Plugins\Abbreviator\Services
  */
 class AbbreviationCollection extends AbstractCollection
   implements AbbreviationCollectionInterface
@@ -73,7 +72,6 @@ class AbbreviationCollection extends AbstractCollection
    *
    * @return void
    * @throws AbbreviationCollectionException
-   * @noinspection PhpMissingParamTypeInspection
    */
   public function offsetSet($offset, $value): void
   {

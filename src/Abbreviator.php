@@ -1,11 +1,11 @@
 <?php
 
-namespace Dashifen\Abbreviator;
+namespace Dashifen\WordPress\Plugins\Abbreviator;
 
 use Dashifen\Transformer\TransformerException;
 use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Traits\OptionsManagementTrait;
-use Dashifen\Abbreviator\Services\AbbreviationCollection;
+use Dashifen\WordPress\Plugins\Abbreviator\Services\AbbreviationCollection;
 use Dashifen\WPHandler\Handlers\Plugins\AbstractPluginHandler;
 
 class Abbreviator extends AbstractPluginHandler
@@ -53,11 +53,11 @@ class Abbreviator extends AbstractPluginHandler
    *
    * Gathers abbreviations and returns them to the client.
    *
-   * @return void
+   * @return never
    * @throws HandlerException
    * @throws TransformerException
    */
-  protected function ajaxGetAbbreviations(): void
+  protected function ajaxGetAbbreviations(): never
   {
     wp_die(
       json_encode(

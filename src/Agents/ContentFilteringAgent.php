@@ -1,21 +1,21 @@
 <?php
 
-namespace Dashifen\Abbreviator\Agents;
+namespace Dashifen\WordPress\Plugins\Abbreviator\Agents;
 
-use Dashifen\Abbreviator\Abbreviator;
+use Dashifen\WordPress\Plugins\Abbreviator\Abbreviator;
 use Dashifen\Transformer\TransformerException;
 use Dashifen\WPHandler\Handlers\HandlerException;
 use Dashifen\WPHandler\Agents\AbstractPluginAgent;
-use Dashifen\Abbreviator\Repositories\Abbreviation;
+use Dashifen\WordPress\Plugins\Abbreviator\Repositories\Abbreviation;
 use Dashifen\WPHandler\Traits\PostMetaManagementTrait;
-use Dashifen\Abbreviator\Services\AbbreviationCollection;
+use Dashifen\WordPress\Plugins\Abbreviator\Services\AbbreviationCollection;
 
 /**
  * Class ContentFilteringAgent
  *
  * @property Abbreviator $handler
  *
- * @package Dashifen\Abbreviator\Agents
+ * @package Dashifen\WordPress\Plugins\Abbreviator\Agents
  */
 class ContentFilteringAgent extends AbstractPluginAgent
 {
@@ -82,7 +82,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
       if (empty($replacedContent)) {
         
         // but, if we're here, then we need to get replacement content.  either
-        // we've never done so for this post or the post changed and we can no
+        // we've never done so for this post or the post changed, and we can no
         // longer rely on the prior metadata.  regardless, we get the replaced
         // content and then store it in the database for next time.
         
@@ -104,6 +104,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
    *
    * @return bool
    * @throws HandlerException
+   * @throws TransformerException
    */
   private function shouldRecheckPost(): bool
   {
@@ -150,6 +151,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
    *
    * @return bool
    * @throws HandlerException
+   * @throws TransformerException
    */
   private function postHasAbbreviations(string $content): bool
   {
@@ -199,6 +201,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
    *
    * @return string
    * @throws HandlerException
+   * @throws TransformerException
    */
   private function produceReplacedContent(string $content): string
   {
@@ -221,6 +224,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
    *
    * @return string
    * @throws HandlerException
+   * @throws TransformerException
    */
   private function makeReplacementsAroundTags(string $content): string
   {
@@ -237,7 +241,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
         foreach ($parts as $i => $part) {
           $reconstruction .= $part;
           
-          // $parts is an array of the everything before and after the current
+          // $parts is an array of everything before and after the current
           // abbreviation.  we keep concatenating these parts back into the
           // reconstruction variable, but we now have to decide if we add the
           // abbreviation or its tag into that string to join this part and
@@ -300,7 +304,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
    */
   private function isWithinTag(string $content): bool
   {
-    // in this context, an open tag is one that has a < symbol to begin it but
+    // in this context, an open tag is one that has a < symbol to begin it, but
     // we haven't yet added a > to the content to finish it.  we can tell this
     // if the number of < symbols is not the same as the > ones in our content.
     // the canReplace method checks that these counts are equal, so here we'll
@@ -327,8 +331,7 @@ class ContentFilteringAgent extends AbstractPluginAgent
   
     $tags = $this->abbreviations->getTags();
     $abbreviations = $this->abbreviations->getAbbreviations();
-    $content = str_replace($abbreviations, $tags, $content);
-    return $content;
+    return str_replace($abbreviations, $tags, $content);
   }
   
   /**

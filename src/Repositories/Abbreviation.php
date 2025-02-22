@@ -1,6 +1,6 @@
 <?php
 
-namespace Dashifen\Abbreviator\Repositories;
+namespace Dashifen\WordPress\Plugins\Abbreviator\Repositories;
 
 use Dashifen\Repository\Repository;
 use Dashifen\Repository\RepositoryException;
@@ -12,7 +12,7 @@ use Dashifen\Repository\RepositoryException;
  * @property-read string $abbreviation
  * @property-read string $meaning
  *
- * @package Dashifen\Abbreviator\Repositories
+ * @package Dashifen\WordPress\Plugins\Abbreviator\Repositories
  */
 class Abbreviation extends Repository
 {
@@ -46,7 +46,7 @@ class Abbreviation extends Repository
    *
    * @param string $property
    *
-   * @return mixed|string
+   * @return string
    * @throws RepositoryException
    */
   public function __get(string $property): string
