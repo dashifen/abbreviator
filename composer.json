@@ -1,6 +1,6 @@
 {
   "name": "dashifen/abbreviator",
-  "description": "A WordPress plugin that allows you to define abbreviations and their meaning which are automatically added to the content of a post when encountered for the first time.",
+  "description": "A WordPress plugin that allows you to add inline <abbr> tags to paragraph blocks.",
   "minimum-stability": "stable",
   "type": "wordpress-plugin",
   "license": "MIT",
@@ -17,8 +17,7 @@
   },
   "require": {
     "php": ">=8.2",
-    "dashifen/wp-handler": "^11",
-    "timber/timber": "^2"
+    "dashifen/wp-handler": "^11"
   },
   "config": {
     "optimize-autoloader": true,
