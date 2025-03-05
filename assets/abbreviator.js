@@ -12,34 +12,60 @@ import {useSelect} from '@wordpress/data';
 import {tool as toolIcon} from "@wordpress/icons";
 import {useState} from "@wordpress/element";
 
+// these two variables are used throughout the code below.  since we use the
+// word "title" when referring to the <abbr> tag's attribute, we make the these
+// variables a little more verbose so they don't collide elsewhere.
+
 const formatTypeTitle = 'Abbreviation';
 const formatTypeName = 'dash/abbreviation';
+const allowedBlocks = ['core/paragraph'];
 
+/**
+ * The editor for our format type.
+ *
+ * @param isActive
+ * @param value
+ * @param onChange
+ * @param contentRef
+ *
+ * @returns {JSX.Element|null}
+ * @constructor
+ */
 const Abbreviator = ({isActive, value, onChange, contentRef}) => {
-  const [isPopoverVisible, setIsPopoverVisible] = useState(false);
-  const togglePopover = () => {
-    setIsPopoverVisible((state) => !state);
-  };
+  
+  // first, if this isn't an allowed block, then we can return null because
+  // we do not want to add the <abbr> type at this time.  once we identify
+  // the selected block, we can see if it's included in the above defined
+  // allowedBlock array.
   
   const selectedBlock = useSelect((select) => {
     return select('core/block-editor').getSelectedBlock();
   }, []);
   
-  if (selectedBlock && selectedBlock.name !== 'core/paragraph') {
+  if (selectedBlock && !allowedBlocks.includes(selectedBlock.name)) {
     return null;
   }
+  
+  // if we haven't returned, then we set up a function that will toggle the
+  // visibility of our popover.  because the popover should start closed, we're
+  // 90+ percent sure that's why the Boolean false value is passed to useState.
+  
+  const [isPopoverVisible, setIsPopoverVisible] = useState(false);
+  const togglePopover = () => {
+    setIsPopoverVisible((state) => !state);
+  };
   
   return (
     <>
       <RichTextToolbarButton
         icon={toolIcon}
-        label="Abbreviation"
-        title="Abbreviation"
+        label={formatTypeTitle}
+        title={formatTypeTitle}
         isActive={isActive}
         role="menuitemcheckbox"
         onClick={() => {
           if (isActive) {
-            onChange(removeFormat(value, name));
+            onChange(removeFormat(value, formatTypeName));
           } else {
             togglePopover();
           }
@@ -71,7 +97,6 @@ function InlineAbbrUI({value, contentRef, onChange, onClose}) {
       anchor={popoverAnchor}
       onClose={onClose}
     >
-      
       <VStack
         as="form"
         spacing={4}
@@ -107,6 +132,12 @@ function InlineAbbrUI({value, contentRef, onChange, onClose}) {
     </Popover>
   );
 }
+
+// this small object is used above as the settings for our popoverAnchor.
+// it's very similar to the object used in the registerFormatType function
+// below, but because it's not exact, we can't simply use it again.  instead,
+// we use the bits of it that we can so that changes to the object will also
+// register the format type correctly.
 
 const abbreviator = {
   formatTypeName,
