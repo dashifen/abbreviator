@@ -1,0 +1,6 @@
+.block-editor-format-toolbar__abbreviator-popover {
+  .components-popover__content {
+    padding: 1rem;
+    width: auto;
+  }
+}

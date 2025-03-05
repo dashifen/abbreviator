@@ -28,5 +28,6 @@ class Abbreviator extends AbstractPluginHandler
   {
     $assets = require $this->pluginDir . '/build/abbreviator.asset.php';
     $this->enqueue('build/abbreviator.js', $assets['dependencies']);
+    $this->enqueue('assets/abbreviator.css');
   }
 }
